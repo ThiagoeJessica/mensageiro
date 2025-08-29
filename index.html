@@ -338,6 +338,15 @@ async function requestNotificationPermission() {
     await Notification.requestPermission();
   }
 }
+const btnClearChat = document.getElementById('btn-clear-chat');
+if (btnClearChat) {
+  btnClearChat.onclick = async () => {
+    if (confirm('Tem certeza que deseja apagar toda a conversa?')) {
+      await set(ref(db, 'messages'), null);
+      messagesDiv.innerHTML = ''; // limpa a tela imediatamente
+    }
+  };
+}
 
 </script>
 </body>
