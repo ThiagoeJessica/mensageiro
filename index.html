@@ -12,6 +12,7 @@
   <header class="bg-teal-600 text-white p-4 flex justify-between items-center shadow">
     <h1 class="text-lg font-bold">Jéssica e Thiago</h1>
     <div class="flex items-center gap-3">
+      <button id="btn-clear-chat" class="bg-red-500 px-3 py-1 rounded text-white hover:bg-red-600">Apagar conversa</button>
       <span id="user-email" class="text-sm"></span>
       <button id="btn-logout" class="hidden bg-white text-teal-600 px-3 py-1 rounded">Sair</button>
     </div>
@@ -175,7 +176,7 @@ function startListeners() {
   const msgsRef = ref(db, 'messages');
   onChildAdded(msgsRef, snap => {
     const m = snap.val();
-    appendMessage(m);
+    appendMessage(m, snap.key);
     if (Notification.permission === 'granted' && m.from !== me.uid)
       new Notification('Nova mensagem', { body: m.text || 'Arquivo' });
   });
@@ -185,21 +186,58 @@ function startListeners() {
   onValue(locRef, snap => updateMarkers(snap.val() || {}));
 }
 
-function appendMessage(m) {
+function appendMessage(m, key){
   const d = document.createElement('div');
-  d.className = 'p-2 rounded bg-gray-200';
-  d.innerHTML = `<div class="${m.from === me.uid ? 'font-bold' : ''}">${m.fromEmail}</div>`;
-  if (m.text) d.innerHTML += `<div>${m.text}</div>`;
-if (m.file) {
-  const isImage = /\.(jpe?g|png|gif|bmp|webp)$/i.test(m.file);
-  d.innerHTML += `<a href="${m.file}" target="_blank" class="text-blue-600 underline" download>📎 Baixar arquivo</a>`;
-  if (isImage) {
-    d.innerHTML += `<br><img src="${m.file}" class="max-w-full rounded mt-1"/>`;
+  d.className = 'p-2 rounded bg-gray-200 relative group mb-2';
+
+  d.innerHTML = `
+    <div class="flex justify-between items-start">
+      <div class="${m.from === me.uid ? 'font-bold' : ''}">
+        ${m.fromEmail || 'Anônimo'}
+      </div>
+      ${m.from === me.uid ? `
+      <div class="relative">
+        <button class="btn-menu text-gray-600 hover:text-black" aria-label="Menu">⋮</button>
+        <div class="menu hidden absolute right-0 mt-1 bg-white border rounded shadow z-10">
+          <button class="btn-delete px-3 py-1 text-sm text-red-600 hover:bg-red-100 w-full text-left">Excluir</button>
+        </div>
+      </div>` : ''}
+    </div>
+    ${m.text ? `<div class="mt-1">${m.text}</div>` : ''}
+    ${m.file ? `
+      <a href="${m.file}" target="_blank" class="underline text-blue-600 hover:text-blue-800">Arquivo</a><br>
+      <img src="${m.file}" class="max-w-full rounded mt-1"/>` : ''}
+  `;
+
+  // Toggle menu on button click
+  const btnMenu = d.querySelector('.btn-menu');
+  if (btnMenu) {
+    const menu = d.querySelector('.menu');
+    btnMenu.onclick = e => {
+      e.stopPropagation();
+      menu.classList.toggle('hidden');
+    };
+    // Close menu if clicking outside
+    document.addEventListener('click', () => {
+      if (!menu.classList.contains('hidden')) menu.classList.add('hidden');
+    });
   }
-}
+
+  // Delete message on clicking delete button
+  const btnDelete = d.querySelector('.btn-delete');
+  if (btnDelete) {
+    btnDelete.onclick = async e => {
+      e.stopPropagation();
+      if (confirm('Quer mesmo excluir essa mensagem?')) {
+        await set(ref(db, 'messages/' + key), null);
+      }
+    };
+  }
+
   messagesDiv.appendChild(d);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
+
 
 const CLOUDINARY_IMAGE_UPLOAD = 'https://api.cloudinary.com/v1_1/djh28wqul/image/upload';
 const CLOUDINARY_RAW_UPLOAD = 'https://api.cloudinary.com/v1_1/djh28wqul/raw/upload';
