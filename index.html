@@ -67,6 +67,7 @@
   </div>
 
   <script type="module">
+                      console.log('Script carregado')
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
 import { getDatabase, ref, push, set, onChildAdded, onValue } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js';
@@ -111,6 +112,7 @@ const btnStopLoc = document.getElementById('btn-stop-loc');
 const CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/djh28wqul/auto/upload';
 const CLOUDINARY_UPLOAD_PRESET = 'yp5soqak';
 
+    console.log('Conectando eventos dos botões...');
 // Eventos dos botões
 btnSignup.onclick = () => createUserWithEmailAndPassword(auth, authEmail.value, authPass.value).catch(e => alert(e.message));
 btnSignin.onclick = () => signInWithEmailAndPassword(auth, authEmail.value, authPass.value).catch(e => alert(e.message));
