@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Comunicação</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body class="h-screen flex flex-col bg-gray-100">
+  <header class="bg-teal-600 text-white p-4 flex justify-between items-center shadow">
+    <h1 class="text-lg font-bold">Chat Casal</h1>
+    <div class="flex items-center gap-3">
+      <span id="user-email" class="text-sm"></span>
+      <button id="btn-logout" class="hidden bg-white text-teal-600 px-3 py-1 rounded">Sair</button>
+    </div>
+  </header>
+
+  <main class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
+    <!-- Chat -->
+    <section class="bg-white rounded-2xl shadow flex flex-col p-3 md:col-span-2">
+      <div id="messages" class="flex-1 overflow-auto p-2 space-y-2 border rounded bg-gray-50"></div>
+      <form id="send-form" class="flex gap-2 mt-2">
+        <input id="txt-message" type="text" placeholder="Mensagem..." class="flex-1 border rounded px-3 py-2" />
+        <input id="file-input" type="file" class="border rounded px-2 py-1" />
+        <button class="bg-teal-600 text-white px-4 py-2 rounded">Enviar</button>
+      </form>
+    </section>
+
+    <!-- Lateral -->
+    <aside class="flex flex-col gap-4">
+      <!-- Localização -->
+      <div class="bg-white rounded-2xl shadow p-3">
+        <h2 class="font-semibold mb-2">Localização</h2>
+        <div id="map" class="h-52 rounded"></div>
+        <div class="flex gap-2 mt-2">
+          <button id="btn-share-loc" class="bg-teal-600 text-white px-2 py-1 rounded">Compartilhar</button>
+          <button id="btn-stop-loc" class="bg-red-500 text-white px-2 py-1 rounded">Parar</button>
+        </div>
+      </div>
+
+      <!-- Calendário -->
+      <div class="bg-white rounded-2xl shadow p-3 flex flex-col">
+        <h2 class="font-semibold mb-2">Calendário</h2>
+        <form id="event-form" class="flex flex-col gap-2 mb-2">
+          <input id="event-text" type="text" placeholder="Descrição" class="border rounded px-2 py-1" />
+          <input id="event-date" type="date" class="border rounded px-2 py-1" />
+          <button class="bg-teal-600 text-white px-2 py-1 rounded">Salvar</button>
+        </form>
+        <div id="events" class="text-sm space-y-1 max-h-40 overflow-auto"></div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Login modal -->
+  <div id="login-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-2xl shadow-lg w-80">
+      <h3 class="font-bold mb-3">Entrar / Criar conta</h3>
+      <input id="auth-email" type="email" placeholder="Email" class="w-full border rounded px-3 py-2 mb-2" />
+      <input id="auth-pass" type="password" placeholder="Senha" class="w-full border rounded px-3 py-2 mb-2" />
+      <div class="flex justify-end gap-2">
+        <button id="btn-signup" class="bg-gray-200 px-3 py-1 rounded">Criar</button>
+        <button id="btn-signin" class="bg-teal-600 text-white px-3 py-1 rounded">Entrar</button>
+      </div>
+      <button id="btn-google" class="mt-3 w-full bg-red-500 text-white px-3 py-2 rounded">Entrar com Google</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js';
+    import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
+    import { getDatabase, ref, push, set, onChildAdded, onValue } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js';
+    import L from 'https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js';
+
+    // === Firebase Config ===
+    const firebaseConfig = {
+      apiKey: "AIzaSyCQLvTVYek9q_4qGNG_DXQhVghhP3cu0s8",
+      authDomain: "more-475ac.firebaseapp.com",
+      databaseURL: "https://more-475ac-default-rtdb.firebaseio.com",
+      projectId: "more-475ac",
+      storageBucket: "more-475ac.firebasestorage.app",
+      messagingSenderId: "518653676423",
+      appId: "1:518653676423:web:29dbeadaad7426ab36a122"
+    };
+
+    const CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/djh28wqul/auto/upload';
+    const CLOUDINARY_UPLOAD_PRESET = 'yp5soqak';
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const loginModal=document.getElementById('login-modal');
+    const btnSignup=document.getElementById('btn-signup');
+    const btnSignin=document.getElementById('btn-signin');
+    const btnGoogle=document.getElementById('btn-google');
+    const authEmail=document.getElementById('auth-email');
+    const authPass=document.getElementById('auth-pass');
+    const btnLogout=document.getElementById('btn-logout');
+    const userEmailDiv=document.getElementById('user-email');
+
+    const messagesDiv=document.getElementById('messages');
+    const form=document.getElementById('send-form');
+    const txtMessage=document.getElementById('txt-message');
+    const fileInput=document.getElementById('file-input');
+
+    const eventForm=document.getElementById('event-form');
+    const eventText=document.getElementById('event-text');
+    const eventDate=document.getElementById('event-date');
+    const eventsDiv=document.getElementById('events');
+
+    const btnShareLoc=document.getElementById('btn-share-loc');
+    const btnStopLoc=document.getElementById('btn-stop-loc');
+
+    btnSignup.onclick=()=>createUserWithEmailAndPassword(auth,authEmail.value,authPass.value).catch(e=>alert(e.message));
+    btnSignin.onclick=()=>signInWithEmailAndPassword(auth,authEmail.value,authPass.value).catch(e=>alert(e.message));
+    btnGoogle.onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>alert(e.message));
+    btnLogout.onclick=()=>signOut(auth);
+
+    let me=null; let watchId=null; let myMarker=null; const otherMarkers={};
+
+    onAuthStateChanged(auth,user=>{
+      if(user){
+        me={uid:user.uid,email:user.email};
+        loginModal.style.display='none';
+        userEmailDiv.textContent=user.email;
+        btnLogout.classList.remove('hidden');
+        startListeners();
+        requestNotificationPermission();
+      }else{
+        loginModal.style.display='flex';
+        userEmailDiv.textContent='';
+        btnLogout.classList.add('hidden');
+      }
+    });
+
+    function startListeners(){
+      const msgsRef=ref(db,'messages');
+      onChildAdded(msgsRef,snap=>{const m=snap.val();appendMessage(m);if(Notification.permission==='granted'&&m.from!==me.uid)new Notification('Nova mensagem',{body:m.text||'Arquivo'});});
+      const evRef=ref(db,'events');
+      onValue(evRef,snap=>renderEvents(snap.val()||{}));
+      const locRef=ref(db,'locations');
+      onValue(locRef,snap=>updateMarkers(snap.val()||{}));
+    }
+
+    function appendMessage(m){
+      const d=document.createElement('div');d.className='p-2 rounded bg-gray-200';
+      d.innerHTML=`<div class="${m.from===me.uid?'font-bold':''}">${m.fromEmail}</div>`;
+      if(m.text)d.innerHTML+=`<div>${m.text}</div>`;
+      if(m.file){d.innerHTML+=`<a href="${m.file}" target="_blank">Arquivo</a><br><img src="${m.file}" class="max-w-full rounded mt-1"/>`;}
+      messagesDiv.appendChild(d);messagesDiv.scrollTop=messagesDiv.scrollHeight;
+    }
+
+    form.onsubmit=async e=>{e.preventDefault();
+      const text=txtMessage.value.trim();const file=fileInput.files[0];let fileUrl=null;
+      if(file){const fd=new FormData();fd.append('file',file);fd.append('upload_preset',CLOUDINARY_UPLOAD_PRESET);const res=await fetch(CLOUDINARY_UPLOAD_URL,{method:'POST',body:fd});const j=await res.json();fileUrl=j.secure_url;}
+      if(!text&&!fileUrl)return;await push(ref(db,'messages'),{from:me.uid,fromEmail:me.email,text:text||null,file:fileUrl||null,ts:Date.now()});txtMessage.value='';fileInput.value='';};
+
+    eventForm.onsubmit=async e=>{e.preventDefault();if(!eventText.value||!eventDate.value)return;const id=Date.now();await set(ref(db,'events/'+id),{desc:eventText.value,date:eventDate.value,owner:me.uid,ownerEmail:me.email});eventText.value='';eventDate.value='';};
+    function renderEvents(data){eventsDiv.innerHTML='';Object.values(data).sort((a,b)=>a.date.localeCompare(b.date)).forEach(ev=>{eventsDiv.innerHTML+=`<div><b>${ev.date}</b> - ${ev.desc}<div class='text-xs text-gray-500'>${ev.ownerEmail}</div></div>`});}
+
+    const map=L.map('map').setView([-15.8,-47.9],4);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+    btnShareLoc.onclick=()=>{if(!navigator.geolocation)return;watchId=navigator.geolocation.watchPosition(async pos=>{await set(ref(db,'locations/'+me.uid),{lat:pos.coords.latitude,lon:pos.coords.longitude,email:me.email});},{enableHighAccuracy:true});};
+    btnStopLoc.onclick=()=>{if(watchId)navigator.geolocation.clearWatch(watchId);if(me)set(ref(db,'locations/'+me.uid),null);};
+    function updateMarkers(data){for(const uid in data){const it=data[uid];if(uid===me.uid){if(myMarker)myMarker.setLatLng([it.lat,it.lon]);else myMarker=L.marker([it.lat,it.lon]).addTo(map).bindPopup('Você');map.setView([it.lat,it.lon],14);}else{if(otherMarkers[uid])otherMarkers[uid].setLatLng([it.lat,it.lon]);else otherMarkers[uid]=L.marker([it.lat,it.lon]).addTo(map).bindPopup(it.email);}}}
+
+    async function requestNotificationPermission(){if('Notification'in window&&Notification.permission!=='granted'){await Notification.requestPermission();}}
+  </script>
+</body>
+</html>
