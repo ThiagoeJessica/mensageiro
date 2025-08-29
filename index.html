@@ -251,7 +251,7 @@ watchId = navigator.geolocation.watchPosition(
   },
   { enableHighAccuracy: true }
 );
-
+}
 
 btnStopLoc.onclick = () => {
   if (watchId) navigator.geolocation.clearWatch(watchId);
