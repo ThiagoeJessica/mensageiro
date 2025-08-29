@@ -230,6 +230,7 @@ function appendMessage(m, key){
       e.stopPropagation();
       if (confirm('Quer mesmo excluir essa mensagem?')) {
         await set(ref(db, 'messages/' + key), null);
+        d.remove();
       }
     };
   }
