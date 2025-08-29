@@ -190,9 +190,13 @@ function appendMessage(m) {
   d.className = 'p-2 rounded bg-gray-200';
   d.innerHTML = `<div class="${m.from === me.uid ? 'font-bold' : ''}">${m.fromEmail}</div>`;
   if (m.text) d.innerHTML += `<div>${m.text}</div>`;
-  if (m.file) {
-    d.innerHTML += `<a href="${m.file}" target="_blank">Arquivo</a><br><img src="${m.file}" class="max-w-full rounded mt-1"/>`;
+if (m.file) {
+  const isImage = /\.(jpe?g|png|gif|bmp|webp)$/i.test(m.file);
+  d.innerHTML += `<a href="${m.file}" target="_blank" class="text-blue-600 underline" download>📎 Baixar arquivo</a>`;
+  if (isImage) {
+    d.innerHTML += `<br><img src="${m.file}" class="max-w-full rounded mt-1"/>`;
   }
+}
   messagesDiv.appendChild(d);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
