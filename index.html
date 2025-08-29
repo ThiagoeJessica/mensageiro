@@ -6,6 +6,7 @@
   <title>Mensageiro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body class="h-screen flex flex-col bg-gray-100">
   <header class="bg-teal-600 text-white p-4 flex justify-between items-center shadow">
@@ -71,7 +72,7 @@
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
 import { getDatabase, ref, push, set, onChildAdded, onValue } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js';
-import L from 'https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js';
+
 
 // Config Firebase
 const firebaseConfig = {
