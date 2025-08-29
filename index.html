@@ -201,24 +201,43 @@ if (m.file) {
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-form.onsubmit = async e => {
+const CLOUDINARY_IMAGE_UPLOAD = 'https://api.cloudinary.com/v1_1/djh28wqul/image/upload';
+const CLOUDINARY_RAW_UPLOAD = 'https://api.cloudinary.com/v1_1/djh28wqul/raw/upload';
+
+form.onsubmit = async (e) => {
   e.preventDefault();
   const text = txtMessage.value.trim();
   const file = fileInput.files[0];
   let fileUrl = null;
+
   if (file) {
     const fd = new FormData();
     fd.append('file', file);
     fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-    const res = await fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: fd });
+
+    // Detecta tipo de arquivo
+    const isImage = file.type.startsWith('image/');
+    const uploadUrl = isImage ? CLOUDINARY_IMAGE_UPLOAD : CLOUDINARY_RAW_UPLOAD;
+
+    const res = await fetch(uploadUrl, { method: 'POST', body: fd });
     const j = await res.json();
     fileUrl = j.secure_url;
   }
+
   if (!text && !fileUrl) return;
-  await push(ref(db, 'messages'), { from: me.uid, fromEmail: me.email, text: text || null, file: fileUrl || null, ts: Date.now() });
+
+  await push(ref(db, 'messages'), {
+    from: me.uid,
+    fromEmail: me.email,
+    text: text || null,
+    file: fileUrl || null,
+    ts: Date.now()
+  });
+
   txtMessage.value = '';
   fileInput.value = '';
 };
+
 
 eventForm.onsubmit = async e => {
   e.preventDefault();
