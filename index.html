@@ -206,10 +206,20 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 
 
 btnShareLoc.onclick = () => {
   if (!navigator.geolocation) return;
-  watchId = navigator.geolocation.watchPosition(async pos => {
-    await set(ref(db, 'locations/' + me.uid), { lat: pos.coords.latitude, lon: pos.coords.longitude, email: me.email });
-  }, { enableHighAccuracy: true });
-};
+watchId = navigator.geolocation.watchPosition(
+  async pos => {
+    await set(ref(db, 'locations/' + me.uid), {
+      lat: pos.coords.latitude,
+      lon: pos.coords.longitude,
+      email: me.email,
+    });
+  },
+  err => {
+    console.error('Erro ao obter localização:', err);
+  },
+  { enableHighAccuracy: true }
+);
+
 
 btnStopLoc.onclick = () => {
   if (watchId) navigator.geolocation.clearWatch(watchId);
