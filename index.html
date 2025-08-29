@@ -163,7 +163,6 @@ onAuthStateChanged(auth, user => {
     userEmailDiv.textContent = user.email;
     btnLogout.classList.remove('hidden');
     startListeners();
-    requestNotificationPermission();
   } else {
     me = null;
     loginModal.style.display = 'flex';
