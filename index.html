@@ -115,9 +115,41 @@ const CLOUDINARY_UPLOAD_PRESET = 'yp5soqak';
 
     console.log('Conectando eventos dos botões...');
 // Eventos dos botões
-btnSignup.onclick = () => createUserWithEmailAndPassword(auth, authEmail.value, authPass.value).catch(e => alert(e.message));
-btnSignin.onclick = () => signInWithEmailAndPassword(auth, authEmail.value, authPass.value).catch(e => alert(e.message));
-btnGoogle.onclick = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(e => alert(e.message));
+btnSignup.onclick = async () => {
+  try {
+    await createUserWithEmailAndPassword(auth, authEmail.value, authPass.value);
+    if ('Notification' in window && Notification.permission !== 'granted') {
+      const permission = await Notification.requestPermission();
+      console.log('Permissão de notificação:', permission);
+    }
+  } catch (e) {
+    alert(e.message);
+  }
+};
+btnSignin.onclick = async () => {
+  try {
+    await signInWithEmailAndPassword(auth, authEmail.value, authPass.value);
+    // Login ok, agora pedimos permissão para notificação
+    if ('Notification' in window && Notification.permission !== 'granted') {
+      const permission = await Notification.requestPermission();
+      console.log('Permissão de notificação:', permission);
+    }
+  } catch (e) {
+    alert(e.message);
+  }
+};
+
+btnGoogle.onclick = async () => {
+  try {
+    await signInWithPopup(auth, new GoogleAuthProvider());
+    if ('Notification' in window && Notification.permission !== 'granted') {
+      const permission = await Notification.requestPermission();
+      console.log('Permissão de notificação:', permission);
+    }
+  } catch (e) {
+    alert(e.message);
+  }
+};
 btnLogout.onclick = () => signOut(auth);
 
 // Estado do usuário
