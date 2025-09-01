@@ -7,347 +7,1202 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-</head>
-<body class="h-screen flex flex-col bg-gray-100">
-  <header class="bg-teal-600 text-white p-4 flex justify-between items-center shadow">
-    <h1 class="text-lg font-bold">Jéssica e Thiago</h1>
-    <div class="flex items-center gap-3">
-      <button id="btn-clear-chat" class="bg-red-500 px-3 py-1 rounded text-white hover:bg-red-600">Apagar conversa</button>
-      <span id="user-email" class="text-sm"></span>
-      <button id="btn-logout" class="hidden bg-white text-teal-600 px-3 py-1 rounded">Sair</button>
-    </div>
-  </header>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <style>
+/* Botão hamburger - as três barrinhas */
+#menu-toggle.hamburger {
+  width: 30px;
+  height: 22px;
+  position: relative;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0;
+  margin-left: 0;
+  z-index: 1100;
+  margin-right: 16px;
+}
 
-  <main class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
+#menu-toggle.hamburger span {
+  display: block;
+  height: 4px;
+  background-color: white;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+/* Animação do botão quando aberto */
+#menu-toggle.hamburger.open span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+#menu-toggle.hamburger.open span:nth-child(2) {
+  opacity: 0;
+}
+
+#menu-toggle.hamburger.open span:nth-child(3) {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+
+/* Estilo extra para parecer com WhatsApp */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #ECE5DD;
+  /*height: 100vh;*/
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: 18px;
+}
+
+header {
+  background-color: #075E54;
+  color: white;
+  height: 56px;
+  padding: 0px 16px;
+  display: flex;
+  justify-content: space-between; /* separa esquerda e direita */
+  align-items: center;
+  box-shadow: 0 2px 3px rgba(0,0,0,0.15);
+}
+
+.left-header, .right-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.left-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 1;
+  min-width: 0; /* importante para permitir o encolhimento */
+}
+
+.right-header {
+  flex-shrink: 0; /* botão não encolhe */
+}
+
+.left-header h1 {
+  max-width: calc(100vw - 140px); /* ajusta espaço para botão + margem */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+  flex-shrink: 1;
+  min-width: 0; /* importante para o texto encolher no flex */
+}
+.right-header button#btn-clear-chat {
+  background: #E53935;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+}
+
+.right-header button#btn-logout {
+  background: white;
+  color: #075E54;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  display: none; /* controla via JS */
+  cursor: pointer;
+}
+
+.right-header span#user-email {
+  font-size: 0.9rem;
+  color: white;
+}
+
+button {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  height: calc(100vh - 56px);
+  transition: margin-left 0.3s ease;
+}
+
+/* Quando o menu estiver aberto, desloca o main no desktop */
+main.menu-open {
+  margin-left: 280px; /* largura do aside */
+}
+
+/* Chat container */
+#chat-section {
+  background: #FFFFFF;
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #DDD;
+  border-right: 1px solid #DDD;
+}
+
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  background: #ECE5DD;
+}
+
+/* Cada mensagem */
+.message {
+  max-width: 75%;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 7.5px;
+  position: relative;
+  word-wrap: break-word;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+  clear: both;
+}
+
+.message.own {
+  background: #DCF8C6;
+  margin-left: auto;
+  border-bottom-right-radius: 0;
+}
+
+.message.other {
+  background: white;
+  margin-right: auto;
+  border-bottom-left-radius: 0;
+}
+
+.message .sender {
+  font-weight: 700;
+  font-size: 0.75rem;
+  margin-bottom: 3px;
+  color: #333;
+}
+
+.message img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin-top: 5px;
+  cursor: pointer;
+}
+
+.message a.file-link {
+  color: #0645AD;
+  text-decoration: underline;
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+
+/* Form de envio */
+#send-form {
+  display: flex;
+  padding: 8px 12px;
+  background: #f0f0f0;
+  border-top: 1px solid #ccc;
+  align-items: center;
+  gap: 8px;
+}
+
+#send-form input[type="text"] {
+  flex: 1;
+  border-radius: 20px;
+  border: none;
+  padding: 10px 15px;
+  font-size: 1rem;
+  outline: none;
+  background: white;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+#file-input {
+  display: none;
+}
+
+#btn-file-label {
+  background: #25D366;
+  color: white;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-size: 20px;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+#btn-file-label:hover {
+  background: #1ebe57;
+}
+
+#send-btn {
+  background: #25D366;
+  border: none;
+  color: white;
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+#send-btn:disabled {
+  background: #a1d9b1;
+  cursor: default;
+}
+
+#send-btn:hover:not(:disabled) {
+  background: #1ebe57;
+}
+
+aside {
+  position: fixed;
+  top: 64px; /* altura do header */
+  left: 0;
+  height: calc(100vh - 64px);
+  width: 250px;
+  background: white;
+  border-right: 1px solid #ddd;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: 999;
+}
+
+/* Quando aberto */
+aside.open {
+  transform: translateX(0);
+}
+
+/* Conteúdo principal (chat e tal) ocupa toda largura quando menu fechado */
+#chat-section {
+  flex: 1;
+  transition: margin-left 0.3s ease;
+}
+
+/* Quando menu aberto, desloca conteúdo para direita */
+body.menu-open #chat-section {
+  margin-left: 250px;
+}
+
+/* Estilos de botões do aside */
+aside h2 {
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 6px;
+}
+
+aside button {
+  background: #25D366;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+aside button:hover {
+  background: #1ebe57;
+}
+
+aside button.red {
+  background: #E53935;
+}
+
+aside button.red:hover {
+  background: #b32b25;
+}
+
+/* Calendário e eventos */
+#events {
+  height: calc(100vh - 200px);
+  overflow-y: auto;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+#events div {
+  margin-bottom: 6px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 4px;
+}
+
+#events div b {
+  color: #25D366;
+}
+
+#events div .owner-email {
+  font-size: 0.7rem;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* Modal login */
+#login-modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+#login-modal > div {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 360px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+#login-modal h3 {
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+#login-modal input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 1rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+#login-modal button {
+  width: 100%;
+  padding: 10px 0;
+  margin-top: 8px;
+  font-weight: 700;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.3s ease;
+}
+
+#btn-google {
+  background-color: #DB4437;
+  color: white;
+}
+
+#btn-google:hover {
+  background-color: #b3362a;
+}
+
+#btn-signin {
+  background-color: #25D366;
+  color: white;
+}
+
+#btn-signin:hover {
+  background-color: #1ebe57;
+}
+
+#btn-signup {
+  background-color: #ddd;
+  color: #444;
+  width: 48%;
+  margin-right: 4%;
+}
+
+#btn-signup:hover {
+  background-color: #ccc;
+}
+
+/* Scrollbar customizada para messages */
+#messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+#messages::-webkit-scrollbar-thumb {
+  background-color: #25D366;
+  border-radius: 3px;
+}
+
+#messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* evita scroll horizontal */
+  width: 100%;
+  height: 100%;
+}
+
+/* Dentro do media query para celular: */
+@media (max-width: 768px) {
+  aside {
+    width: 100%;
+    box-sizing: border-box; /* evita overflow causado por padding/borda */
+  }
+
+  /* Evitar scroll lateral quando menu aberto */
+  body.menu-open {
+    overflow-x: hidden;
+  }
+  body {
+    font-size: 16px; /* no mobile, um pouco menor mas ainda legível */
+  }
+
+  header h1 {
+    font-size: 1.5rem;
+  }
+
+  .message {
+    font-size: 1rem;
+  }
+  
+}
+
+@keyframes blink-border {
+  0%, 100% {
+    border: 2px solid transparent;
+  }
+  50% {
+    border: 2px solid #666666; /* seu tom de cinza */
+  }
+}
+
+.blink-border {
+  animation: blink-border 1s ease-in-out 2; /* 2 vezes, 1s de duração */
+  border-radius: 6px; /* mantém o arredondamento da borda */
+}
+
+/* Desktop - menu lateral começa escondido à esquerda */
+@media (min-width: 769px) {
+  header {
+    justify-content: space-between;
+    padding: 12px 24px;
+  }
+
+  #menu-toggle {
+    margin-left: 0;
+  }
+
+  header h1 {
+    margin-left: 12px;
+  }
+}
+
+
+
+/* Por padrão no celular menu está escondido (transform -100%) */
+@media (max-width: 768px) {
+  #menu-toggle.hamburger {
+    display: flex;
+  }
+
+  aside {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    height: calc(100vh - 56px);
+    width: 100vw; /* ocupa toda a largura */
+    background: white;
+    z-index: 999;
+    transform: translateX(-100%);
+    border-top: none;
+    border-left: none;
+    box-shadow: none; /* remove sombra lateral */
+    transition: transform 0.3s ease;
+  }
+
+  aside.open {
+    transform: translateX(0);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  }
+
+  main {
+    flex-direction: column;
+    margin-left: 0 !important; /* força para mobile não ter deslocamento */
+  }
+
+  main.menu-open {
+    margin-left: 0 !important;
+  }
+
+  /* Esconde o chat quando menu aberto no celular */
+  body.menu-open #chat-section {
+    display: none;
+  }
+
+  /* Garante que chat fica visível quando menu fechado */
+  #chat-section {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+  </style>
+</head>
+<body>
+<header>
+  <div class="left-header">
+    <button id="menu-toggle" class="hamburger" aria-label="Abrir menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <h1>Jéssica e Thiago</h1>
+  </div>
+  
+  <div class="right-header">
+    <button id="btn-clear-chat" style="background:#E53935; border:none; padding: 6px 12px; border-radius:8px;">Apagar conversa</button>
+    <span id="user-email" style="font-size: 0.9rem; color:#fff;"></span>
+    <button id="btn-logout" style="display:none; background:white; color:#075E54; border:none; padding:6px 12px; border-radius:8px;">Sair</button>
+  </div>
+</header>
+
+
+
+  <main>
     <!-- Chat -->
-    <section class="bg-white rounded-2xl shadow flex flex-col p-3 md:col-span-2">
-      <div id="messages" class="flex-1 overflow-auto p-2 space-y-2 border rounded bg-gray-50"></div>
-      <form id="send-form" class="flex gap-2 mt-2">
-        <input id="txt-message" type="text" placeholder="Mensagem..." class="flex-1 border rounded px-3 py-2" />
-        <input id="file-input" type="file" class="border rounded px-2 py-1" />
-        <button class="bg-teal-600 text-white px-4 py-2 rounded">Enviar</button>
+    <section id="chat-section">
+      <div id="messages"></div>
+      <form id="send-form" autocomplete="off">
+        <label for="file-input" id="btn-file-label" title="Anexar arquivo">📎</label>
+        <input id="file-input" type="file" />
+        <input id="txt-message" type="text" placeholder="Mensagem..." />
+        <button id="send-btn" type="submit" disabled>Enviar</button>
       </form>
     </section>
 
-    <!-- Lateral -->
-    <aside class="flex flex-col gap-4">
+    <!-- Sidebar -->
+    <aside>
       <!-- Localização -->
-      <div class="bg-white rounded-2xl shadow p-3">
-        <h2 class="font-semibold mb-2">Localização</h2>
-        <div id="map" class="h-52 rounded"></div>
-        <div class="flex gap-2 mt-2">
-          <button id="btn-share-loc" class="bg-teal-600 text-white px-2 py-1 rounded">Compartilhar</button>
-          <button id="btn-stop-loc" class="bg-red-500 text-white px-2 py-1 rounded">Parar</button>
+      <div>
+        <h2>Localização</h2>
+        <div id="map" style="height:180px; border-radius: 8px; overflow:hidden;"></div>
+        <div style="margin-top:8px; display:flex; gap:8px;">
+          <button id="btn-share-loc">Compartilhar</button>
+          <button id="btn-stop-loc" class="red">Parar</button>
         </div>
       </div>
 
-      <!-- Calendário -->
-      <div class="bg-white rounded-2xl shadow p-3 flex flex-col">
-        <h2 class="font-semibold mb-2">Calendário</h2>
-        <form id="event-form" class="flex flex-col gap-2 mb-2">
-          <input id="event-text" type="text" placeholder="Descrição" class="border rounded px-2 py-1" />
-          <input id="event-date" type="date" class="border rounded px-2 py-1" />
-          <button class="bg-teal-600 text-white px-2 py-1 rounded">Salvar</button>
-        </form>
-        <div id="events" class="text-sm space-y-1 max-h-40 overflow-auto"></div>
+    <!-- Calendário -->
+    <div id="calendar-container">
+      <h2>Calendário</h2>
+      <form id="event-form" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+        <input id="event-text" type="text" placeholder="Descrição" />
+        <input id="event-date" type="date" />
+        <button type="submit">Salvar</button>
+      </form>
+
+      <div id="events" style="border: 1px solid #ccc; padding: 12px; border-radius: 6px;">
+        <div id="future-events" style="margin-bottom: 16px;">
+          <h3 style="font-weight: bold;">Eventos Futuros</h3>
+          <!-- Eventos futuros vão aparecer aqui -->
+        </div>
+        <div id="past-events" style="max-height: 200px; overflow-y: auto; border-top: 1px solid #ccc; padding-top: 10px;">
+          <h3 style="font-weight: bold;">Eventos Passados</h3>
+          <!-- Eventos passados vão aparecer aqui -->
+        </div>
       </div>
+    </div>
     </aside>
   </main>
 
   <!-- Login modal -->
-  <div id="login-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center">
-    <div class="bg-white p-6 rounded-2xl shadow-lg w-80">
-      <h3 class="font-bold mb-3">Entrar / Criar conta</h3>
-      <input id="auth-email" type="email" placeholder="Email" class="w-full border rounded px-3 py-2 mb-2" />
-      <input id="auth-pass" type="password" placeholder="Senha" class="w-full border rounded px-3 py-2 mb-2" />
-      <div class="flex justify-end gap-2">
-        <button id="btn-signup" class="bg-gray-200 px-3 py-1 rounded">Criar</button>
-        <button id="btn-signin" class="bg-teal-600 text-white px-3 py-1 rounded">Entrar</button>
+  <div id="login-modal">
+    <div>
+      <h3>Entrar / Criar conta</h3>
+      <input id="auth-email" type="email" placeholder="Email" />
+      <input id="auth-pass" type="password" placeholder="Senha" />
+      <div style="display:flex; justify-content:space-between; gap: 8px;">
+        <button id="btn-signup" type="button">Criar</button>
+        <button id="btn-signin" type="button">Entrar</button>
       </div>
-      <button id="btn-google" class="mt-3 w-full bg-red-500 text-white px-3 py-2 rounded">Entrar com Google</button>
+      <button id="btn-google" type="button" style="margin-top: 12px;">Entrar com Google</button>
     </div>
   </div>
 
   <script type="module">
-                      console.log('Script carregado')
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js';
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
-import { getDatabase, ref, push, set, onChildAdded, onValue } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js';
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js';
+    import { 
+      getAuth, onAuthStateChanged, createUserWithEmailAndPassword, 
+      signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup 
+    } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
+    import { getDatabase, ref, push, set, onChildAdded, onValue } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js';
 
+    // Config Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCQLvTVYek9q_4qGNG_DXQhVghhP3cu0s8",
+      authDomain: "more-475ac.firebaseapp.com",
+      databaseURL: "https://more-475ac-default-rtdb.firebaseio.com",
+      projectId: "more-475ac",
+      storageBucket: "more-475ac.appspot.com",
+      messagingSenderId: "518653676423",
+      appId: "1:518653676423:web:29dbeadaad7426ab36a122"
+    };
 
-// Config Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyCQLvTVYek9q_4qGNG_DXQhVghhP3cu0s8",
-  authDomain: "more-475ac.firebaseapp.com",
-  databaseURL: "https://more-475ac-default-rtdb.firebaseio.com",
-  projectId: "more-475ac",
-  storageBucket: "more-475ac.appspot.com",
-  messagingSenderId: "518653676423",
-  appId: "1:518653676423:web:29dbeadaad7426ab36a122"
-};
+    // Inicializa Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
 
-// Inicializa Firebase (UMA vez só)
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
+    // DOM Elements
+    const loginModal = document.getElementById('login-modal');
+    const btnSignup = document.getElementById('btn-signup');
+    const btnSignin = document.getElementById('btn-signin');
+    const btnGoogle = document.getElementById('btn-google');
+    const authEmail = document.getElementById('auth-email');
+    const authPass = document.getElementById('auth-pass');
+    const btnLogout = document.getElementById('btn-logout');
+    const userEmailDiv = document.getElementById('user-email');
+    const messagesDiv = document.getElementById('messages');
+    const form = document.getElementById('send-form');
+    const txtMessage = document.getElementById('txt-message');
+    const fileInput = document.getElementById('file-input');
+    const eventForm = document.getElementById('event-form');
+    const eventText = document.getElementById('event-text');
+    const eventDate = document.getElementById('event-date');
+    const eventsDiv = document.getElementById('events');
+    const btnShareLoc = document.getElementById('btn-share-loc');
+    const btnStopLoc = document.getElementById('btn-stop-loc');
+    const btnClearChat = document.getElementById('btn-clear-chat');
+    const sendBtn = document.getElementById('send-btn');
+    const futureEventsDiv = document.getElementById('future-events');
+    const pastEventsDiv = document.getElementById('past-events');
 
-// DOM
-const loginModal = document.getElementById('login-modal');
-const btnSignup = document.getElementById('btn-signup');
-const btnSignin = document.getElementById('btn-signin');
-const btnGoogle = document.getElementById('btn-google');
-const authEmail = document.getElementById('auth-email');
-const authPass = document.getElementById('auth-pass');
-const btnLogout = document.getElementById('btn-logout');
-const userEmailDiv = document.getElementById('user-email');
-const messagesDiv = document.getElementById('messages');
-const form = document.getElementById('send-form');
-const txtMessage = document.getElementById('txt-message');
-const fileInput = document.getElementById('file-input');
-const eventForm = document.getElementById('event-form');
-const eventText = document.getElementById('event-text');
-const eventDate = document.getElementById('event-date');
-const eventsDiv = document.getElementById('events');
-const btnShareLoc = document.getElementById('btn-share-loc');
-const btnStopLoc = document.getElementById('btn-stop-loc');
-
-const CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/djh28wqul/auto/upload';
-const CLOUDINARY_UPLOAD_PRESET = 'yp5soqak';
-
-    console.log('Conectando eventos dos botões...');
-// Eventos dos botões
-btnSignup.onclick = async () => {
-  try {
-    await createUserWithEmailAndPassword(auth, authEmail.value, authPass.value);
-    if ('Notification' in window && Notification.permission !== 'granted') {
-      const permission = await Notification.requestPermission();
-      console.log('Permissão de notificação:', permission);
+    // Função para formatar data no formato Dia/Mês/Ano
+    function formatDateDMY(dateStr) {
+      const date = new Date(dateStr);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0'); // mês começa em 0
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
     }
-  } catch (e) {
-    alert(e.message);
-  }
-};
-btnSignin.onclick = async () => {
-  try {
-    await signInWithEmailAndPassword(auth, authEmail.value, authPass.value);
-    // Login ok, agora pedimos permissão para notificação
-    if ('Notification' in window && Notification.permission !== 'granted') {
-      const permission = await Notification.requestPermission();
-      console.log('Permissão de notificação:', permission);
+
+
+    // Cloudinary configs
+    const CLOUDINARY_UPLOAD_PRESET = 'yp5soqak';
+    const CLOUDINARY_IMAGE_UPLOAD = 'https://api.cloudinary.com/v1_1/djh28wqul/image/upload';
+    const CLOUDINARY_RAW_UPLOAD = 'https://api.cloudinary.com/v1_1/djh28wqul/raw/upload';
+
+    // Estado do usuário e localização
+    let me = null;
+    let watchId = null;
+    let myMarker = null;
+    const otherMarkers = {};
+
+    // Inicializa mapa
+    const map = L.map('map').setView([-15.8, -47.9], 4);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+    // Controla habilitação do botão Enviar (habilita só se tiver texto ou arquivo selecionado)
+    function updateSendButton() {
+      sendBtn.disabled = !txtMessage.value.trim() && !fileInput.files.length;
     }
-  } catch (e) {
-    alert(e.message);
-  }
-};
+    txtMessage.addEventListener('input', updateSendButton);
+    fileInput.addEventListener('change', updateSendButton);
 
-btnGoogle.onclick = async () => {
-  try {
-    await signInWithPopup(auth, new GoogleAuthProvider());
-    if ('Notification' in window && Notification.permission !== 'granted') {
-      const permission = await Notification.requestPermission();
-      console.log('Permissão de notificação:', permission);
+    // Upload arquivo no Cloudinary e retorna URL
+    async function uploadFile(file) {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      const isImage = file.type.startsWith('image/');
+      const uploadUrl = isImage ? CLOUDINARY_IMAGE_UPLOAD : CLOUDINARY_RAW_UPLOAD;
+
+      try {
+        const resp = await fetch(uploadUrl, { method: 'POST', body: fd });
+        if (!resp.ok) throw new Error('Falha no upload');
+        const data = await resp.json();
+        return data.secure_url;
+      } catch(e) {
+        alert('Erro ao enviar arquivo: ' + e.message);
+        return null;
+      }
     }
-  } catch (e) {
-    alert(e.message);
-  }
-};
-btnLogout.onclick = () => signOut(auth);
 
-// Estado do usuário
-let me = null, watchId = null, myMarker = null;
-const otherMarkers = {};
+    // Enviar mensagem para Firebase
+    async function sendMessage(text, fileUrl = null) {
+      if (!me) return alert('Você precisa estar logado para enviar mensagens.');
+      const message = {
+        sender: me.email,
+        text: text || '',
+        timestamp: Date.now(),
+        fileUrl: fileUrl || '',
+      };
+      const messagesRef = ref(db, 'messages');
+      await push(messagesRef, message);
+    }
 
-onAuthStateChanged(auth, user => {
-  if (user) {
-    me = { uid: user.uid, email: user.email };
-    loginModal.style.display = 'none';
-    userEmailDiv.textContent = user.email;
-    btnLogout.classList.remove('hidden');
-    startListeners();
-  } else {
-    me = null;
-    loginModal.style.display = 'flex';
-    userEmailDiv.textContent = '';
-    btnLogout.classList.add('hidden');
-  }
-});
+    // Renderiza mensagens
+let lastMessageDate = '';
+  
+function renderMessage(data, key) {
+  const { sender, text, fileUrl, timestamp } = data;
+  const messageDate = new Date(timestamp);
 
-function startListeners() {
-  const msgsRef = ref(db, 'messages');
-  onChildAdded(msgsRef, snap => {
-    const m = snap.val();
-    appendMessage(m, snap.key);
-    if (Notification.permission === 'granted' && m.from !== me.uid)
-      new Notification('Nova mensagem', { body: m.text || 'Arquivo' });
-  });
-  const evRef = ref(db, 'events');
-  onValue(evRef, snap => renderEvents(snap.val() || {}));
-  const locRef = ref(db, 'locations');
-  onValue(locRef, snap => updateMarkers(snap.val() || {}));
+// Formatar data: dd/mm/aaaa
+const day = messageDate.getDate().toString().padStart(2, '0');
+const month = (messageDate.getMonth() + 1).toString().padStart(2, '0');
+const year = messageDate.getFullYear();
+const formattedDate = `${day}/${month}/${year}`;
+
+// Formatar hora: hh:mm
+const hours = messageDate.getHours().toString().padStart(2, '0');
+const minutes = messageDate.getMinutes().toString().padStart(2, '0');
+const formattedTime = `${hours}:${minutes}`;
+
+// Se for uma nova data, adiciona um separador centralizado
+if (formattedDate !== lastMessageDate) {
+  const dateDiv = document.createElement('div');
+  // Não faça dateDiv.textContent = formattedDate;
+
+  dateDiv.style.display = 'flex';
+  dateDiv.style.justifyContent = 'center';
+  dateDiv.style.alignItems = 'center';
+  dateDiv.style.margin = '16px 0 8px 0';
+
+  const innerSpan = document.createElement('span');
+  innerSpan.textContent = formattedDate;
+  innerSpan.style.backgroundColor = '#e0e0e0';
+  innerSpan.style.padding = '4px 12px';
+  innerSpan.style.borderRadius = '12px';
+  innerSpan.style.color = '#666';
+  innerSpan.style.fontSize = '0.9em';
+  innerSpan.style.fontWeight = 'bold';
+
+  dateDiv.appendChild(innerSpan);
+  messagesDiv.appendChild(dateDiv);
+  lastMessageDate = formattedDate;
 }
 
-function appendMessage(m, key){
-  const d = document.createElement('div');
-  d.className = 'p-2 rounded bg-gray-200 relative group mb-2';
 
-  d.innerHTML = `
-    <div class="flex justify-between items-start">
-      <div class="${m.from === me.uid ? 'font-bold' : ''}">
-        ${m.fromEmail || 'Anônimo'}
-      </div>
-      ${m.from === me.uid ? `
-      <div class="relative">
-        <button class="btn-menu text-gray-600 hover:text-black" aria-label="Menu">⋮</button>
-        <div class="menu hidden absolute right-0 mt-1 bg-white border rounded shadow z-10">
-          <button class="btn-delete px-3 py-1 text-sm text-red-600 hover:bg-red-100 w-full text-left">Excluir</button>
-        </div>
-      </div>` : ''}
-    </div>
-    ${m.text ? `<div class="mt-1">${m.text}</div>` : ''}
-    ${m.file ? `
-      <a href="${m.file}" target="_blank" class="underline text-blue-600 hover:text-blue-800">Arquivo</a><br>
-      <img src="${m.file}" class="max-w-full rounded mt-1"/>` : ''}
-  `;
 
-  // Toggle menu on button click
-  const btnMenu = d.querySelector('.btn-menu');
-  if (btnMenu) {
-    const menu = d.querySelector('.menu');
-    btnMenu.onclick = e => {
+const div = document.createElement('div');
+
+  div.classList.add('message');
+  div.classList.add(sender === me.email ? 'own' : 'other');
+  div.dataset.key = key; // guardar a chave da mensagem para exclusão
+
+  const senderSpan = document.createElement('div');
+  senderSpan.className = 'sender';
+  senderSpan.textContent = sender === me.email ? 'Você' : sender;
+  div.appendChild(senderSpan);
+
+  // Botão de três pontinhos
+  if (sender === me.email) {
+    const optionsBtn = document.createElement('button');
+    optionsBtn.textContent = '⋮'; // três pontinhos verticais
+    optionsBtn.style.position = 'absolute';
+    optionsBtn.style.top = '8px';
+    optionsBtn.style.right = '8px';
+    optionsBtn.style.background = 'transparent';
+    optionsBtn.style.border = 'none';
+    optionsBtn.style.cursor = 'pointer';
+    optionsBtn.style.fontSize = '1.2rem';
+    optionsBtn.title = 'Opções';
+
+    // Criar menu suspenso
+    const menu = document.createElement('div');
+    menu.style.position = 'absolute';
+    menu.style.top = '30px';
+    menu.style.right = '8px';
+    menu.style.background = 'white';
+    menu.style.border = '1px solid #ccc';
+    menu.style.borderRadius = '4px';
+    menu.style.padding = '4px 8px';
+    menu.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+    menu.style.display = 'none';
+    menu.style.zIndex = '100';
+
+    const deleteOption = document.createElement('div');
+    deleteOption.textContent = 'Excluir';
+    deleteOption.style.cursor = 'pointer';
+    deleteOption.style.color = '#E53935';
+    deleteOption.style.fontWeight = '600';
+
+    menu.appendChild(deleteOption);
+    div.style.position = 'relative';
+    div.appendChild(optionsBtn);
+    div.appendChild(menu);
+
+    optionsBtn.addEventListener('click', e => {
       e.stopPropagation();
-      menu.classList.toggle('hidden');
-    };
-    // Close menu if clicking outside
+      menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Fecha o menu ao clicar fora
     document.addEventListener('click', () => {
-      if (!menu.classList.contains('hidden')) menu.classList.add('hidden');
+      menu.style.display = 'none';
+    });
+
+    // Ação excluir
+    deleteOption.addEventListener('click', async () => {
+      if (confirm('Quer realmente excluir esta mensagem?')) {
+        const msgKey = div.dataset.key;
+        if (msgKey) {
+          const messageRef = ref(db, `messages/${msgKey}`);
+          await set(messageRef, null);
+          div.remove();
+        }
+      }
     });
   }
 
-  // Delete message on clicking delete button
-  const btnDelete = d.querySelector('.btn-delete');
-  if (btnDelete) {
-    btnDelete.onclick = async e => {
-      e.stopPropagation();
-      if (confirm('Quer mesmo excluir essa mensagem?')) {
-        await set(ref(db, 'messages/' + key), null);
-        d.remove();
-      }
-    };
+  if (text) {
+    const textSpan = document.createElement('div');
+    textSpan.textContent = text;
+    div.appendChild(textSpan);
   }
 
-  messagesDiv.appendChild(d);
+  if (fileUrl) {
+    if (/\.(jpe?g|png|gif|webp|bmp)$/i.test(fileUrl)) {
+      // Imagem inline clicável
+      const img = document.createElement('img');
+      img.src = fileUrl;
+      img.alt = "Imagem enviada";
+      img.title = "Clique para ampliar";
+      img.addEventListener('click', () => window.open(fileUrl, '_blank'));
+      div.appendChild(img);
+    } else {
+      // Link arquivo
+      const a = document.createElement('a');
+      a.href = fileUrl;
+      a.target = "_blank";
+      a.textContent = 'Arquivo anexado';
+      a.className = 'file-link';
+      div.appendChild(a);
+    }
+  }
+
+  const timeSpan = document.createElement('div');
+  timeSpan.textContent = formattedTime;
+  timeSpan.style.fontSize = '0.75em';
+  timeSpan.style.color = '#666';
+  timeSpan.style.textAlign = 'right';
+  timeSpan.style.marginTop = '6px';
+  div.appendChild(timeSpan);
+
+  messagesDiv.appendChild(div);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
 
-const CLOUDINARY_IMAGE_UPLOAD = 'https://api.cloudinary.com/v1_1/djh28wqul/image/upload';
-const CLOUDINARY_RAW_UPLOAD = 'https://api.cloudinary.com/v1_1/djh28wqul/raw/upload';
+    // Ouve mensagens no Firebase
+    function listenMessages() {
+      const messagesRef = ref(db, 'messages');
+      onChildAdded(messagesRef, snapshot => {
+        renderMessage(snapshot.val(), snapshot.key);
+      });
 
-form.onsubmit = async (e) => {
-  e.preventDefault();
-  const text = txtMessage.value.trim();
-  const file = fileInput.files[0];
-  let fileUrl = null;
+    }
 
-  if (file) {
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    // Envia mensagem do formulário
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      sendBtn.disabled = true;
 
-    // Detecta tipo de arquivo
-    const isImage = file.type.startsWith('image/');
-    const uploadUrl = isImage ? CLOUDINARY_IMAGE_UPLOAD : CLOUDINARY_RAW_UPLOAD;
+      let fileUrl = null;
+      if (fileInput.files.length) {
+        const file = fileInput.files[0];
+        fileUrl = await uploadFile(file);
+      }
+      const text = txtMessage.value.trim();
 
-    const res = await fetch(uploadUrl, { method: 'POST', body: fd });
-    const j = await res.json();
-    fileUrl = j.secure_url;
-  }
+      if (!text && !fileUrl) {
+        sendBtn.disabled = false;
+        return alert('Digite uma mensagem ou escolha um arquivo');
+      }
 
-  if (!text && !fileUrl) return;
+      await sendMessage(text, fileUrl);
 
-  await push(ref(db, 'messages'), {
-    from: me.uid,
-    fromEmail: me.email,
-    text: text || null,
-    file: fileUrl || null,
-    ts: Date.now()
-  });
-
-  txtMessage.value = '';
-  fileInput.value = '';
-};
-
-
-eventForm.onsubmit = async e => {
-  e.preventDefault();
-  if (!eventText.value || !eventDate.value) return;
-  const id = Date.now();
-  await set(ref(db, 'events/' + id), { desc: eventText.value, date: eventDate.value, owner: me.uid, ownerEmail: me.email });
-  eventText.value = '';
-  eventDate.value = '';
-};
-
-function renderEvents(data) {
-  eventsDiv.innerHTML = '';
-  Object.values(data).sort((a, b) => a.date.localeCompare(b.date)).forEach(ev => {
-    eventsDiv.innerHTML += `<div><b>${ev.date}</b> - ${ev.desc}<div class='text-xs text-gray-500'>${ev.ownerEmail}</div></div>`;
-  });
-}
-
-const map = L.map('map').setView([-15.8, -47.9], 4);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-
-btnShareLoc.onclick = () => {
-  if (!navigator.geolocation) return;
-watchId = navigator.geolocation.watchPosition(
-  async pos => {
-    await set(ref(db, 'locations/' + me.uid), {
-      lat: pos.coords.latitude,
-      lon: pos.coords.longitude,
-      email: me.email,
+      // limpa
+      txtMessage.value = '';
+      fileInput.value = '';
+      updateSendButton();
+      sendBtn.disabled = false;
     });
-  },
-  err => {
-    console.error('Erro ao obter localização:', err);
-  },
-  { enableHighAccuracy: true }
-);
-}
 
-btnStopLoc.onclick = () => {
-  if (watchId) navigator.geolocation.clearWatch(watchId);
-  if (me) set(ref(db, 'locations/' + me.uid), null);
-};
+    // Compartilhar localização
+    btnShareLoc.addEventListener('click', () => {
+      if (!navigator.geolocation) return alert('Geolocalização não suportada');
+      btnShareLoc.disabled = true;
 
-function updateMarkers(data) {
-  for (const uid in data) {
-    const it = data[uid];
-    if (uid === me.uid) {
-      if (myMarker) myMarker.setLatLng([it.lat, it.lon]);
-      else myMarker = L.marker([it.lat, it.lon]).addTo(map).bindPopup('Você');
-      map.setView([it.lat, it.lon], 14);
-    } else {
-      if (otherMarkers[uid]) otherMarkers[uid].setLatLng([it.lat, it.lon]);
-      else otherMarkers[uid] = L.marker([it.lat, it.lon]).addTo(map).bindPopup(it.email);
-    }
+      watchId = navigator.geolocation.watchPosition(pos => {
+        const { latitude, longitude } = pos.coords;
+        if (!myMarker) {
+          myMarker = L.marker([latitude, longitude], {title: 'Você'});
+          myMarker.addTo(map);
+          map.setView([latitude, longitude], 15);
+        } else {
+          myMarker.setLatLng([latitude, longitude]);
+        }
+        // Envia localização no chat
+        sendMessage(`Minha localização: https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=18/${latitude}/${longitude}`);
+
+      }, err => {
+        alert('Erro ao obter localização: ' + err.message);
+        btnShareLoc.disabled = false;
+      }, {
+        enableHighAccuracy: true,
+        maximumAge: 10000,
+        timeout: 10000
+      });
+    });
+
+    btnStopLoc.addEventListener('click', () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+        if (myMarker) {
+          map.removeLayer(myMarker);
+          myMarker = null;
+        }
+        btnShareLoc.disabled = false;
+      }
+    });
+
+    // Apagar conversa
+    btnClearChat.addEventListener('click', async () => {
+      if (!confirm('Quer realmente apagar toda a conversa?')) return;
+      if (!me) return alert('Você precisa estar logado para apagar a conversa.');
+
+      const messagesRef = ref(db, 'messages');
+      await set(messagesRef, null);
+      messagesDiv.innerHTML = '';
+    });
+
+    // Eventos do calendário
+    eventForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!me) return alert('Você precisa estar logado para salvar eventos');
+      const text = eventText.value.trim();
+      const date = eventDate.value;
+
+      if (!text || !date) return alert('Preencha texto e data');
+      const eventsRef = ref(db, 'events');
+      await push(eventsRef, {
+        owner: me.email,
+        text,
+        date,
+        timestamp: Date.now()
+      });
+      eventText.value = '';
+      eventDate.value = '';
+    });
+
+    // Renderiza eventos
+function renderEvents(events) {
+  futureEventsDiv.innerHTML = '<h3 style="font-weight:bold;">Eventos Futuros</h3>';
+  pastEventsDiv.innerHTML = '<h3 style="font-weight:bold;">Eventos Passados</h3>';
+
+  const now = new Date();
+
+  const futureEvents = events.filter(e => new Date(e.date) >= now);
+  const pastEvents = events.filter(e => new Date(e.date) < now);
+
+  // Eventos futuros com menu suspenso
+  futureEvents.forEach(ev => {
+    const eventEl = document.createElement('div');
+    eventEl.style.border = '1px solid #ddd';
+    eventEl.style.padding = '8px';
+    eventEl.style.marginBottom = '6px';
+    eventEl.style.position = 'relative';
+
+    eventEl.innerHTML = `
+      <span><b>${formatDateDMY(ev.date)}</b>: ${ev.text} <span style="font-size:0.8em; color:#666;">(${ev.owner === me.email ? 'Você' : ev.owner})</span></span>
+      <button class="menu-btn" style="position:absolute; right:8px; top:8px; background:none; border:none; cursor:pointer; font-size:18px; color:#333;">⋮</button>
+      <div class="menu" style="display:none; position:absolute; right:8px; top:30px; background:#fff; border:1px solid #ccc; border-radius:4px; z-index:100; min-width:100px;">
+        <button class="edit-btn" style="width:100%; border:none; background:none; padding:6px; text-align:left; cursor:pointer;color:#777;">Editar</button>
+        <button class="delete-btn" style="width:100%; border:none; background:none; padding:6px; text-align:left; cursor:pointer; color:#E53935;">Excluir</button>
+      </div>
+    `;
+
+    const menuBtn = eventEl.querySelector('.menu-btn');
+    const menu = eventEl.querySelector('.menu');
+
+    menuBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      document.querySelectorAll('#future-events .menu').forEach(m => { if(m !== menu) m.style.display = 'none'; });
+      menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.addEventListener('click', () => {
+      menu.style.display = 'none';
+    });
+
+eventEl.querySelector('.edit-btn').addEventListener('click', () => {
+  eventText.value = ev.text;
+  eventDate.value = ev.date;
+
+  if (ev.key) {
+    const eventRef = ref(db, 'events/' + ev.key);
+    set(eventRef, null);
   }
+  menu.style.display = 'none';
+
+  const calendarDiv = document.querySelector('calendar-container'); // selecione seu div do calendário de forma específica, veja abaixo
+  calendarDiv.classList.add('blink-border');
+
+  // Remove a classe após a animação (2 piscadas de 1s = 2s)
+  setTimeout(() => {
+    calendarDiv.classList.remove('blink-border');
+  }, 2000);
+});
+
+
+    eventEl.querySelector('.delete-btn').addEventListener('click', async () => {
+      if (confirm('Quer realmente excluir este evento?')) {
+        if (ev.key) {
+          const eventRef = ref(db, 'events/' + ev.key);
+          await set(eventRef, null);
+        }
+      }
+      menu.style.display = 'none';
+    });
+
+    futureEventsDiv.appendChild(eventEl);
+  });
+
+  // Eventos passados com botão de excluir simples
+  pastEvents.forEach(ev => {
+    const div = document.createElement('div');
+    div.style.borderBottom = '1px solid #eee';
+    div.style.padding = '6px 0';
+    div.style.display = 'flex';
+    div.style.justifyContent = 'space-between';
+    div.style.alignItems = 'center';
+
+    const textSpan = document.createElement('span');
+    textSpan.textContent = `${formatDateDMY(ev.date)} - ${ev.text} (${ev.owner === me.email ? 'Você' : ev.owner})`;
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'Excluir';
+    deleteBtn.style.background = 'transparent';
+    deleteBtn.style.border = 'none';
+    deleteBtn.style.color = '#E53935';
+    deleteBtn.style.cursor = 'pointer';
+    deleteBtn.style.fontWeight = '600';
+
+    deleteBtn.addEventListener('click', async () => {
+      if (confirm('Quer realmente excluir este evento?')) {
+        if (ev.key) {
+          const eventRef = ref(db, 'events/' + ev.key);
+          await set(eventRef, null);
+        }
+      }
+    });
+
+    div.appendChild(textSpan);
+    div.appendChild(deleteBtn);
+
+    pastEventsDiv.appendChild(div);
+  });
 }
 
-async function requestNotificationPermission() {
-  if ('Notification' in window && Notification.permission !== 'granted') {
-    await Notification.requestPermission();
-  }
-}
-const btnClearChat = document.getElementById('btn-clear-chat');
-if (btnClearChat) {
-  btnClearChat.onclick = async () => {
-    if (confirm('Tem certeza que deseja apagar toda a conversa?')) {
-      await set(ref(db, 'messages'), null);
-      messagesDiv.innerHTML = ''; // limpa a tela imediatamente
+
+    // Ouve eventos
+function listenEvents() {
+  const eventsRef = ref(db, 'events');
+  onValue(eventsRef, snapshot => {
+    const data = snapshot.val();
+    if (!data) {
+      renderEvents([]);
+      return;
     }
-  };
+    // Inclui a chave de cada evento (para editar/excluir)
+    const evs = Object.entries(data).map(([key, ev]) => ({ ...ev, key }));
+    renderEvents(evs);
+  });
 }
 
-</script>
+
+    // Login e autenticação
+    btnSignup.addEventListener('click', () => {
+      const email = authEmail.value.trim();
+      const pass = authPass.value.trim();
+      if (!email || !pass) return alert('Preencha email e senha');
+      createUserWithEmailAndPassword(auth, email, pass)
+        .then(userCredential => {
+          alert('Conta criada com sucesso!');
+          authEmail.value = '';
+          authPass.value = '';
+        })
+        .catch(err => alert('Erro: ' + err.message));
+    });
+
+    btnSignin.addEventListener('click', () => {
+      const email = authEmail.value.trim();
+      const pass = authPass.value.trim();
+      if (!email || !pass) return alert('Preencha email e senha');
+      signInWithEmailAndPassword(auth, email, pass)
+        .catch(err => alert('Erro: ' + err.message));
+    });
+
+    btnGoogle.addEventListener('click', () => {
+      const provider = new GoogleAuthProvider();
+      signInWithPopup(auth, provider)
+        .catch(err => alert('Erro: ' + err.message));
+    });
+
+    btnLogout.addEventListener('click', () => {
+      signOut(auth);
+    });
+
+    // Escuta o estado de login
+    onAuthStateChanged(auth, user => {
+      me = user;
+      if (user) {
+        userEmailDiv.textContent = user.email;
+        btnLogout.style.display = 'inline-block';
+        loginModal.style.display = 'none';
+        listenMessages();
+        listenEvents();
+      } else {
+        me = null;
+        userEmailDiv.textContent = '';
+        btnLogout.style.display = 'none';
+        loginModal.style.display = 'flex';
+        messagesDiv.innerHTML = '';
+        eventsDiv.innerHTML = '';
+      }
+    });
+
+//MENU HAMBURGUER
+const menuToggle = document.getElementById('menu-toggle');
+const aside = document.querySelector('aside');
+const body = document.body;
+
+menuToggle.addEventListener('click', () => {
+  aside.classList.toggle('open');
+  body.classList.toggle('menu-open');
+  
+  // animação do hambúrguer (opcional)
+  menuToggle.classList.toggle('open');
+});
+
+
+  </script>
 </body>
 </html>
