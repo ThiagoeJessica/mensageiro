@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Mensageiro</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="estilos.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 </head>
 
@@ -41,24 +39,19 @@
       <form id="send-form" autocomplete="off">
         <label for="file-input" id="btn-file-label" title="Anexar arquivo">📎</label>
         <input id="file-input" type="file" />
+        
+        <!-- Botão de localização -->
+        <button id="location-button" type="button" title="Enviar localização">📍</button>
+        
         <input id="txt-message" type="text" placeholder="Mensagem..." />
         <button id="send-btn" type="submit" disabled>Enviar</button>
       </form>
     </section>
 
+
     <!-- Sidebar -->
     <aside>
-      <!-- Localização -->
-      <div>
-        <h2>Localização</h2>
-        <div id="map" style="height:180px; border-radius: 8px; overflow:hidden;"></div>
-        <div style="margin-top:8px; display:flex; gap:8px;">
-          <button id="btn-share-loc">Compartilhar</button>
-          <button id="btn-stop-loc" class="red">Parar</button>
-        </div>
-      </div>
-
-    <!-- Calendário -->
+    <!-- Calendário-->
     <div id="calendar-container">
       <h2>Calendário</h2>
       <form id="event-form" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
@@ -78,6 +71,17 @@
         </div>
       </div>
     </div>
+
+    <div id="tasks-section" style="background-color: #f0f8ff; padding: 16px; margin-top: 16px; border-radius: 8px;">
+      <h3>Tarefas</h3>
+      <form id="task-form">
+        <input type="text" id="task-input" placeholder="Adicionar nova tarefa..." autocomplete="off" required style="width: 70%; padding: 8px; margin-right: 8px;">
+        <button type="submit" style="padding: 8px 12px;">Adicionar</button>
+      </form>
+      <ul id="task-list" style="list-style: none; padding-left: 0; margin-top: 12px;"></ul>
+    </div>
+
+
     </aside>
   </main>
 

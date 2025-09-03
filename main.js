@@ -3,7 +3,7 @@
       getAuth, onAuthStateChanged, createUserWithEmailAndPassword, 
       signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup 
     } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js';
-    import { getDatabase, ref, push, set, onChildAdded, onValue } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js';
+    import { getDatabase, ref, push, set, onChildAdded, onChildChanged, onChildRemoved, onValue } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js';
 
     // Config Firebase
     const firebaseConfig = {
@@ -40,10 +40,16 @@
     const eventsDiv = document.getElementById('events');
     const btnShareLoc = document.getElementById('btn-share-loc');
     const btnStopLoc = document.getElementById('btn-stop-loc');
+    const btnLocation = document.getElementById('location-button');
     const btnClearChat = document.getElementById('btn-clear-chat');
     const sendBtn = document.getElementById('send-btn');
     const futureEventsDiv = document.getElementById('future-events');
     const pastEventsDiv = document.getElementById('past-events');
+    const taskForm = document.getElementById('task-form');
+    const taskInput = document.getElementById('task-input');
+    const taskList = document.getElementById('task-list');
+    let editingMessageKey = null;
+
 
     // Função para formatar data no formato Dia/Mês/Ano
     function formatDateDMY(dateStr) {
@@ -65,10 +71,6 @@
     let watchId = null;
     let myMarker = null;
     const otherMarkers = {};
-
-    // Inicializa mapa
-    const map = L.map('map').setView([-15.8, -47.9], 4);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
     // Controla habilitação do botão Enviar (habilita só se tiver texto ou arquivo selecionado)
     function updateSendButton() {
@@ -196,7 +198,29 @@ const div = document.createElement('div');
     deleteOption.style.color = '#E53935';
     deleteOption.style.fontWeight = '600';
 
+    const editOption = document.createElement('div');
+    editOption.textContent = 'Editar';
+    editOption.style.cursor = 'pointer';
+    editOption.style.color = '#1976D2'; // azul
+    editOption.style.fontWeight = '600';
+    editOption.style.marginBottom = '6px';
+
+    menu.appendChild(editOption);
     menu.appendChild(deleteOption);
+
+    editOption.addEventListener('click', () => {
+    menu.style.display = 'none';  // Fecha o menu
+
+    txtMessage.value = text;       // Coloca o texto da mensagem no input (pra você editar)
+    txtMessage.focus();            // Dá foco no input pra já começar a digitar
+
+    editingMessageKey = key;       // Guarda a chave da mensagem que você quer editar
+
+    sendBtn.textContent = 'Salvar'; // Muda o botão enviar pra "Salvar"
+    fileInput.disabled = true;     // Opcional: desabilita o input de arquivo enquanto edita
+    });
+
+
     div.style.position = 'relative';
     div.appendChild(optionsBtn);
     div.appendChild(menu);
@@ -264,78 +288,116 @@ const div = document.createElement('div');
 
 
     // Ouve mensagens no Firebase
-    function listenMessages() {
-      const messagesRef = ref(db, 'messages');
-      onChildAdded(messagesRef, snapshot => {
-        renderMessage(snapshot.val(), snapshot.key);
-      });
+function listenMessages() {
+  const messagesRef = ref(db, 'messages');
 
+  onChildAdded(messagesRef, snapshot => {
+    renderMessage(snapshot.val(), snapshot.key);
+  });
+
+  onChildChanged(messagesRef, snapshot => {
+    const key = snapshot.key;
+    const updatedData = snapshot.val();
+
+    const oldMessageDiv = messagesDiv.querySelector(`.message[data-key="${key}"]`);
+    if (oldMessageDiv) {
+      messagesDiv.removeChild(oldMessageDiv);
     }
 
+    renderMessage(updatedData, key);
+  });
+
+  onChildRemoved(messagesRef, snapshot => {
+    const key = snapshot.key;
+    const messageDiv = messagesDiv.querySelector(`.message[data-key="${key}"]`);
+    if (messageDiv) {
+      messageDiv.remove();
+    }
+  });
+}
+
+
     // Envia mensagem do formulário
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      sendBtn.disabled = true;
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  sendBtn.disabled = true;
 
-      let fileUrl = null;
-      if (fileInput.files.length) {
-        const file = fileInput.files[0];
-        fileUrl = await uploadFile(file);
-      }
-      const text = txtMessage.value.trim();
+  let fileUrl = null;
+  if (fileInput.files.length) {
+    const file = fileInput.files[0];
+    fileUrl = await uploadFile(file);
+  }
+  const text = txtMessage.value.trim();
 
-      if (!text && !fileUrl) {
-        sendBtn.disabled = false;
-        return alert('Digite uma mensagem ou escolha um arquivo');
-      }
+  if (!text && !fileUrl) {
+    sendBtn.disabled = false;
+    return alert('Digite uma mensagem ou escolha um arquivo');
+  }
 
-      await sendMessage(text, fileUrl);
-
-      // limpa
-      txtMessage.value = '';
-      fileInput.value = '';
-      updateSendButton();
-      sendBtn.disabled = false;
+  if (editingMessageKey) {
+    // Estamos editando uma mensagem existente
+    const messageRef = ref(db, `messages/${editingMessageKey}`);
+    await set(messageRef, {
+      sender: me.email,
+      text,
+      timestamp: Date.now(),
+      fileUrl: fileUrl || '' // pode ser vazio
     });
+
+    editingMessageKey = null;
+    sendBtn.textContent = 'Enviar';
+    fileInput.disabled = false;
+  } else {
+    // Nova mensagem
+    await sendMessage(text, fileUrl);
+  }
+
+  // Limpa campos
+  txtMessage.value = '';
+  fileInput.value = '';
+  updateSendButton();
+  sendBtn.disabled = false;
+});
+
 
     // Compartilhar localização
-    btnShareLoc.addEventListener('click', () => {
-      if (!navigator.geolocation) return alert('Geolocalização não suportada');
-      btnShareLoc.disabled = true;
+btnLocation.addEventListener('click', () => {
+  if (!navigator.geolocation) {
+    alert('Geolocalização não suportada');
+    return;
+  }
 
-      watchId = navigator.geolocation.watchPosition(pos => {
-        const { latitude, longitude } = pos.coords;
-        if (!myMarker) {
-          myMarker = L.marker([latitude, longitude], {title: 'Você'});
-          myMarker.addTo(map);
-          map.setView([latitude, longitude], 15);
-        } else {
-          myMarker.setLatLng([latitude, longitude]);
-        }
-        // Envia localização no chat
-        sendMessage(`Minha localização: https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=18/${latitude}/${longitude}`);
+  btnLocation.disabled = true;
 
-      }, err => {
-        alert('Erro ao obter localização: ' + err.message);
-        btnShareLoc.disabled = false;
-      }, {
-        enableHighAccuracy: true,
-        maximumAge: 10000,
-        timeout: 10000
-      });
-    });
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { latitude, longitude } = pos.coords;
+      const message = `Minha localização: https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=18/${latitude}/${longitude}`;
 
-    btnStopLoc.addEventListener('click', () => {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-        watchId = null;
-        if (myMarker) {
-          map.removeLayer(myMarker);
-          myMarker = null;
-        }
-        btnShareLoc.disabled = false;
-      }
-    });
+      
+      // Preencher o input da mensagem
+      txtMessage.value = message;
+
+      // Aqui você chama a função que envia a mensagem,
+      // ou apenas habilita o botão de enviar para o usuário clicar
+      // Por exemplo:
+      document.getElementById('send-btn').disabled = false;
+
+      btnLocation.disabled = false;
+    },
+    (err) => {
+      alert('Erro ao obter localização: ' + err.message);
+      btnLocation.disabled = false;
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 10000,
+      timeout: 10000,
+    }
+  );
+});
+
+
 
     // Apagar conversa
     btnClearChat.addEventListener('click', async () => {
@@ -416,7 +478,7 @@ eventEl.querySelector('.edit-btn').addEventListener('click', () => {
   }
   menu.style.display = 'none';
 
-  const calendarDiv = document.querySelector('calendar-container'); // selecione seu div do calendário de forma específica, veja abaixo
+  const calendarDiv = document.querySelector('#event-form'); // selecione seu div do calendário de forma específica, veja abaixo
   calendarDiv.classList.add('blink-border');
 
   // Remove a classe após a animação (2 piscadas de 1s = 2s)
@@ -577,4 +639,98 @@ document.addEventListener('click', () => {
 // Impede o clique dentro do menu de fechá-lo
 userMenu.addEventListener('click', (e) => {
   e.stopPropagation();
+});
+
+function renderTask(task, key) {
+  const li = document.createElement('li');
+  li.dataset.key = key;
+  li.style.display = 'flex';
+  li.style.alignItems = 'center';
+  li.style.marginBottom = '8px';
+
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = task.done || false;
+  checkbox.style.marginRight = '8px';
+
+  const span = document.createElement('span');
+  span.textContent = task.text;
+  span.style.flex = '1';
+  if (checkbox.checked) {
+    span.style.textDecoration = 'line-through';
+    span.style.color = '#888';
+  }
+
+  // Atualiza visual do texto ao marcar/desmarcar
+  checkbox.addEventListener('change', async () => {
+    const taskRef = ref(db, 'tasks/' + key);
+    await set(taskRef, { text: task.text, done: checkbox.checked, owner: task.owner });
+  });
+
+  // Botão para remover
+  const btnDelete = document.createElement('button');
+  btnDelete.textContent = '❌';
+  btnDelete.style.marginLeft = '8px';
+  btnDelete.style.border = 'none';
+  btnDelete.style.background = 'transparent';
+  btnDelete.style.cursor = 'pointer';
+  btnDelete.title = 'Excluir tarefa';
+
+  btnDelete.addEventListener('click', async () => {
+    if (confirm('Deseja realmente excluir esta tarefa?')) {
+      const taskRef = ref(db, 'tasks/' + key);
+      await set(taskRef, null);
+    }
+  });
+
+  li.appendChild(checkbox);
+  li.appendChild(span);
+  li.appendChild(btnDelete);
+
+  taskList.appendChild(li);
+}
+
+// Limpa lista e renderiza tudo novamente
+function renderTasks(tasks) {
+  taskList.innerHTML = '';
+  if (!tasks) return;
+  Object.entries(tasks).forEach(([key, task]) => renderTask(task, key));
+}
+
+// Ouvinte do Firebase para tarefas
+function listenTasks() {
+  const tasksRef = ref(db, 'tasks');
+  onValue(tasksRef, (snapshot) => {
+    const data = snapshot.val();
+    renderTasks(data);
+  });
+}
+
+// Enviar nova tarefa
+taskForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!me) return alert('Faça login para adicionar tarefas');
+
+  const text = taskInput.value.trim();
+  if (!text) return;
+
+  const tasksRef = ref(db, 'tasks');
+  await push(tasksRef, { text, done: false, owner: me.email });
+
+  taskInput.value = '';
+});
+
+// Chamar a função para começar a ouvir as tarefas quando o usuário logar
+onAuthStateChanged(auth, user => {
+  me = user;
+  if (user) {
+    // Seu código atual aqui...
+
+    listenTasks(); // Ativa a escuta das tarefas aqui também
+  } else {
+    me = null;
+    // Seu código atual aqui...
+
+    taskList.innerHTML = '';
+  }
 });

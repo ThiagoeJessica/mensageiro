@@ -1,3 +1,13 @@
+#location-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  margin-left: 8px;
+  vertical-align: middle;
+  padding: 0;
+}
+
 #user-avatar:hover {
   background-color: #aaa;
   transition: background-color 0.3s;
@@ -297,6 +307,7 @@ aside {
   transform: translateX(-100%);
   transition: transform 0.3s ease;
   z-index: 999;
+  overflow-y: auto;
 }
 
 /* Quando aberto */
@@ -351,6 +362,8 @@ aside button.red:hover {
   overflow-y: auto;
   font-size: 0.85rem;
   color: #333;
+  max-height: 300px; /* ou outro valor menor */
+  overflow-y: auto;
 }
 
 #events div {
@@ -367,6 +380,14 @@ aside button.red:hover {
   font-size: 0.7rem;
   color: #888;
   margin-top: 2px;
+}
+
+#tasks-section {
+  background-color: #f9fbe7; /* verde clarinho */
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 16px;
+  border: 2px dashed #8bc34a; /* borda visível */
 }
 
 /* Modal login */
