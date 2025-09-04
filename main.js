@@ -290,6 +290,27 @@ const div = document.createElement('div');
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
+//Carregar todas as mensagens de uma vez
+function loadAllMessagesOnce() {
+  const messagesRef = ref(db, 'messages');
+  onValue(messagesRef, snapshot => {
+    const data = snapshot.val();
+    if (!data) {
+      messagesDiv.innerHTML = '';
+      return;
+    }
+    messagesDiv.innerHTML = '';  // limpa antes de renderizar tudo
+    lastMessageDate = '';        // reseta a data para o separador de datas funcionar
+
+    Object.entries(data).forEach(([key, message]) => {
+      renderMessage(message, key);
+    });
+
+    // Scroll para a última mensagem após renderizar tudo
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }, { onlyOnce: true });
+}
+
 
     // Ouve mensagens no Firebase
 function listenMessages() {
@@ -514,6 +535,7 @@ function listenEvents() {
         userEmailDiv.textContent = user.email;
         document.getElementById('user-avatar-container').style.display = 'block';
         loginModal.style.display = 'none';
+        loadAllMessagesOnce();
         listenMessages();
         listenEvents();
       } else {
@@ -740,4 +762,20 @@ form.addEventListener('submit', async e => {
   fileInput.value = '';
   updateSendButton();
   sendBtn.disabled = false;
+});
+
+
+//AJUSTA A ALTURA QUANDO ABRIR TECLADO
+
+let initialHeight = window.innerHeight;
+
+window.addEventListener('resize', () => {
+  const newHeight = window.innerHeight;
+  if (newHeight < initialHeight) {
+    // teclado aberto, sobe o form
+    sendForm.style.bottom = (initialHeight - newHeight + 10) + 'px';
+  } else {
+    // teclado fechado, volta ao normal
+    sendForm.style.bottom = '0';
+  }
 });

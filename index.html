@@ -54,7 +54,7 @@
         title="Anexar / Localização"
         style="position: absolute; top: 50%; right: 8px; transform: translateY(-50%); border: none; background: none; font-size: 20px; cursor: pointer;"
       >
-        📎
+        🔗
       </button>
 
       <!-- Menu suspenso -->
@@ -86,27 +86,29 @@
     <aside>
     <!-- Calendário-->
     <div id="calendar-container">
-      <h2>Calendário</h2>
-      <form id="event-form" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+        <form id="event-form" style="background-color: #f0f8ff; padding: 8px; margin-top: 16px; border-radius: 8px; display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+        <h3>🗓️ Calendário</h3>
         <input id="event-text" type="text" placeholder="Descrição" />
         <input id="event-date" type="date" />
         <button type="submit">Salvar</button>
+
+              <div id="events" style="border-radius: 6px;">
+                <div id="future-events" style="margin-bottom: 16px;">
+                  <h3 style="font-weight: bold;">Eventos Futuros</h3>
+                  <!-- Eventos futuros vão aparecer aqui -->
+                </div>
+                <div id="past-events" style="max-height: 200px; overflow-y: auto; border-top: 1px solid #ccc; padding-top: 10px;">
+                  <h3 style="font-weight: bold;">Eventos Passados</h3>
+                  <!-- Eventos passados vão aparecer aqui -->
+                </div>
+              </div>
       </form>
 
-      <div id="events" style="border: 1px solid #ccc; padding: 12px; border-radius: 6px;">
-        <div id="future-events" style="margin-bottom: 16px;">
-          <h3 style="font-weight: bold;">Eventos Futuros</h3>
-          <!-- Eventos futuros vão aparecer aqui -->
-        </div>
-        <div id="past-events" style="max-height: 200px; overflow-y: auto; border-top: 1px solid #ccc; padding-top: 10px;">
-          <h3 style="font-weight: bold;">Eventos Passados</h3>
-          <!-- Eventos passados vão aparecer aqui -->
-        </div>
-      </div>
+
     </div>
 
-    <div id="tasks-section" style="background-color: #f0f8ff; padding: 16px; margin-top: 16px; border-radius: 8px;">
-      <h3>Tarefas</h3>
+    <div id="tasks-section" style="padding: 16px; margin-top: 16px; border-radius: 8px;">
+      <h3>✔️ Tarefas</h3>
       <form id="task-form">
         <input type="text" id="task-input" placeholder="Adicionar nova tarefa..." autocomplete="off" required style="width: 70%; padding: 8px; margin-right: 8px;">
         <button type="submit" style="padding: 8px 12px;">Adicionar</button>
@@ -125,7 +127,7 @@
       <input id="auth-email" type="email" placeholder="Email" />
       <input id="auth-pass" type="password" placeholder="Senha" />
       <div style="display:flex; justify-content:space-between; gap: 8px;">
-        <button id="btn-signup" type="button">Criar</button>
+        <button id="btn-signup" type="button" style="display: none;"></button>
         <button id="btn-signin" type="button">Entrar</button>
       </div>
       <button id="btn-google" type="button" style="margin-top: 12px;">Entrar com Google</button>

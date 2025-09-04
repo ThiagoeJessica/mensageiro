@@ -1,3 +1,4 @@
+
 #location-button {
   background: none;
   border: none;
@@ -297,7 +298,7 @@ main.menu-open {
 
 aside {
   position: fixed;
-  top: 64px; /* altura do header */
+  top: 64px;
   left: 0;
   height: calc(100vh - 64px);
   width: 250px;
@@ -307,7 +308,14 @@ aside {
   transform: translateX(-100%);
   transition: transform 0.3s ease;
   z-index: 999;
-  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  box-sizing: border-box;
+
+  overflow: hidden; /* tira o scroll do aside todo */
+  padding-bottom: 60px; /* espaço para o #send-form, ajuste conforme altura do form */
 }
 
 /* Quando aberto */
@@ -357,13 +365,35 @@ aside button.red:hover {
 }
 
 /* Calendário e eventos */
+
+#calendar-container,
+#tasks-section {
+  flex: 1 1 50%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* evita scroll do container, rolagem fica interna */
+  border-radius: 8px;
+  padding: 0;
+  margin-bottom: 16px;
+  overflow-y: visible;
+  background-color: #f0f8ff;
+  border: 2px dashed #8bc34a; /* borda visível */
+}
+
+/* só pra o tasks-section manter sua cor e borda */
+#tasks-section {
+  background-color: #f0f8ff;
+  border: 2px dashed #8bc34a; /* borda visível */
+  overflow-y: visible;
+}
+
+/* lista de eventos dentro do calendário */
 #events {
-  height: calc(100vh - 200px);
+  flex: 1 1 auto;
   overflow-y: auto;
   font-size: 0.85rem;
   color: #333;
-  max-height: 300px; /* ou outro valor menor */
-  overflow-y: auto;
+  margin-top: 8px;
 }
 
 #events div {
@@ -382,13 +412,6 @@ aside button.red:hover {
   margin-top: 2px;
 }
 
-#tasks-section {
-  background-color: #f9fbe7; /* verde clarinho */
-  padding: 16px;
-  border-radius: 8px;
-  margin-top: 16px;
-  border: 2px dashed #8bc34a; /* borda visível */
-}
 
 /* Modal login */
 #login-modal {
