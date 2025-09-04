@@ -10,7 +10,7 @@
 }
 
 #user-avatar:hover {
-  background-color: #aaa;
+  background-color: #5e7df2;
   transition: background-color 0.3s;
 }
 
@@ -64,7 +64,7 @@
 /* Estilo extra para parecer com WhatsApp */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #ECE5DD;
+  background: linear-gradient(to bottom, #ffffff, #f6f8ff);
   /*height: 100vh;*/
   margin: 0;
   display: flex;
@@ -73,8 +73,8 @@ body {
 }
 
 header {
-  background-color: #075E54;
-  color: white;
+  background: linear-gradient(90deg, #aebefd, #cdd7fe);
+  color: #2d2d2d;
   height: 56px;
   padding: 0px 16px;
   display: flex;
@@ -175,7 +175,7 @@ main.menu-open {
   flex: 1;
   overflow-y: auto;
   padding: 12px;
-  background: #ECE5DD;
+  background: linear-gradient(to bottom, #ffffff, #f6f8ff);
   padding-bottom: 56px; /* ou o valor exato da altura do #send-form */
 }
 
@@ -194,22 +194,26 @@ main.menu-open {
 }
 
 .message.own {
-  background: #DCF8C6;
+  background: linear-gradient(135deg, #5e7df2, #889cf7);
+  color: white;
   margin-left: auto;
-  border-bottom-right-radius: 0;
+  border-bottom-right-radius: 0.8rem;
+  box-shadow: 0 2px 6px rgba(94,125,242,0.25);
 }
 
 .message.other {
-  background: white;
+  background: linear-gradient(135deg, #dce1fe, #cdd7fe);
   margin-right: auto;
-  border-bottom-left-radius: 0;
+  color: #2d2d2d;
+  border-bottom-left-radius: 0.8rem;
+  box-shadow: 0 2px 6px rgba(173,187,255,0.2);
 }
 
 .message .sender {
   font-weight: 700;
   font-size: 0.75rem;
   margin-bottom: 3px;
-  color: #333;
+  color: #444;
 }
 
 .message img {
@@ -248,8 +252,10 @@ main.menu-open {
   padding: 10px 15px;
   font-size: 1rem;
   outline: none;
-  background: white;
+  background-color: #ffffff;
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+  border: 1px solid #d8ddfb;
+  border-radius: 1.2rem;
 }
 
 #file-input {
@@ -257,7 +263,7 @@ main.menu-open {
 }
 
 #btn-file-label {
-  background: #25D366;
+  background: linear-gradient(135deg, #5e7df2, #889cf7);
   color: white;
   border-radius: 50%;
   width: 36px;
@@ -272,11 +278,11 @@ main.menu-open {
 }
 
 #btn-file-label:hover {
-  background: #1ebe57;
+  background: linear-gradient(135deg, #5e7df2, #889cf7);
 }
 
 #send-btn {
-  background: #25D366;
+  background: linear-gradient(135deg, #5e7df2, #889cf7);
   border: none;
   color: white;
   font-weight: 700;
@@ -288,12 +294,12 @@ main.menu-open {
 }
 
 #send-btn:disabled {
-  background: #a1d9b1;
+  background: linear-gradient(135deg, #889cf7, #aebefd);
   cursor: default;
 }
 
 #send-btn:hover:not(:disabled) {
-  background: #1ebe57;
+  background: linear-gradient(135deg, #889cf7, #aebefd);
 }
 
 aside {
@@ -342,7 +348,7 @@ aside h2 {
 }
 
 aside button {
-  background: #25D366;
+  background: linear-gradient(135deg, #5e7df2, #889cf7);
   color: white;
   border: none;
   border-radius: 6px;
@@ -353,7 +359,7 @@ aside button {
 }
 
 aside button:hover {
-  background: #1ebe57;
+  background: linear-gradient(135deg, #889cf7, #aebefd);
 }
 
 aside button.red {
@@ -377,13 +383,13 @@ aside button.red:hover {
   margin-bottom: 16px;
   overflow-y: visible;
   background-color: #f0f8ff;
-  border: 2px dashed #8bc34a; /* borda visível */
+  border: 2px dashed #5e7df2; /* borda visível */
 }
 
 /* só pra o tasks-section manter sua cor e borda */
 #tasks-section {
   background-color: #f0f8ff;
-  border: 2px dashed #8bc34a; /* borda visível */
+  border: 2px dashed #5e7df2; /* borda visível */
   overflow-y: visible;
 }
 
@@ -403,7 +409,7 @@ aside button.red:hover {
 }
 
 #events div b {
-  color: #25D366;
+  color: #5e7df2;
 }
 
 #events div .owner-email {
@@ -472,12 +478,12 @@ aside button.red:hover {
 }
 
 #btn-signin {
-  background-color: #25D366;
+  background-color: #5e7df2;
   color: white;
 }
 
 #btn-signin:hover {
-  background-color: #1ebe57;
+  background-color: linear-gradient(135deg, #889cf7, #aebefd);
 }
 
 #btn-signup {
@@ -497,7 +503,7 @@ aside button.red:hover {
 }
 
 #messages::-webkit-scrollbar-thumb {
-  background-color: #25D366;
+  background-color: #5e7df2;
   border-radius: 3px;
 }
 
