@@ -34,20 +34,53 @@
 
   <main>
     <!-- Chat -->
-    <section id="chat-section">
-      <div id="messages"></div>
-      <form id="send-form" autocomplete="off">
-        <label for="file-input" id="btn-file-label" title="Anexar arquivo">📎</label>
-        <input id="file-input" type="file" />
-        
-        <!-- Botão de localização -->
-        <button id="location-button" type="button" title="Enviar localização">📍</button>
-        
-        <input id="txt-message" type="text" placeholder="Mensagem..." />
-        <button id="send-btn" type="submit" disabled>Enviar</button>
-      </form>
-    </section>
+<section id="chat-section">
+  <div id="messages"></div>
 
+  <form id="send-form" autocomplete="off">
+    <!-- Campo de mensagem com botão 📎 dentro -->
+    <div style="position: relative; width: 100%; margin-bottom: 8px;">
+      <input
+        id="txt-message"
+        type="text"
+        placeholder="Mensagem..."
+        style="width: 100%; padding-right: 40px; box-sizing: border-box;"
+      />
+
+      <!-- Botão de anexo dentro do input -->
+      <button
+        id="btn-attachment-menu"
+        type="button"
+        title="Anexar / Localização"
+        style="position: absolute; top: 50%; right: 8px; transform: translateY(-50%); border: none; background: none; font-size: 20px; cursor: pointer;"
+      >
+        📎
+      </button>
+
+      <!-- Menu suspenso -->
+      <div
+        id="attachment-menu"
+        style="display: none; position: absolute; bottom: 40px; right: 8px; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); z-index: 100;"
+      >
+        <label
+          for="file-input"
+          style="display: block; padding: 8px 12px; cursor: pointer;"
+        >📁 Anexar arquivo</label>
+        <button
+          id="btn-location"
+          type="button"
+          style="width: 100%; border: none; background: none; padding: 8px 12px; cursor: pointer; text-align: left;"
+        >📍 Enviar localização</button>
+      </div>
+    </div>
+
+    <!-- Campo oculto para upload de arquivo -->
+    <input id="file-input" type="file" style="display: none;" />
+
+    <!-- Botão de envio -->
+    <button id="send-btn" type="submit" disabled>Enviar</button>
+  </form>
+</section>
 
     <!-- Sidebar -->
     <aside>

@@ -40,7 +40,7 @@
     const eventsDiv = document.getElementById('events');
     const btnShareLoc = document.getElementById('btn-share-loc');
     const btnStopLoc = document.getElementById('btn-stop-loc');
-    const btnLocation = document.getElementById('location-button');
+    const btnLocation = document.getElementById('btn-location');
     const btnClearChat = document.getElementById('btn-clear-chat');
     const sendBtn = document.getElementById('send-btn');
     const futureEventsDiv = document.getElementById('future-events');
@@ -48,7 +48,11 @@
     const taskForm = document.getElementById('task-form');
     const taskInput = document.getElementById('task-input');
     const taskList = document.getElementById('task-list');
+    const btnAttachmentMenu = document.getElementById('btn-attachment-menu');
+    const attachmentMenu = document.getElementById('attachment-menu');
     let editingMessageKey = null;
+    let isSendingLocation = false;
+
 
 
     // Função para formatar data no formato Dia/Mês/Ano
@@ -315,89 +319,6 @@ function listenMessages() {
     }
   });
 }
-
-
-    // Envia mensagem do formulário
-form.addEventListener('submit', async e => {
-  e.preventDefault();
-  sendBtn.disabled = true;
-
-  let fileUrl = null;
-  if (fileInput.files.length) {
-    const file = fileInput.files[0];
-    fileUrl = await uploadFile(file);
-  }
-  const text = txtMessage.value.trim();
-
-  if (!text && !fileUrl) {
-    sendBtn.disabled = false;
-    return alert('Digite uma mensagem ou escolha um arquivo');
-  }
-
-  if (editingMessageKey) {
-    // Estamos editando uma mensagem existente
-    const messageRef = ref(db, `messages/${editingMessageKey}`);
-    await set(messageRef, {
-      sender: me.email,
-      text,
-      timestamp: Date.now(),
-      fileUrl: fileUrl || '' // pode ser vazio
-    });
-
-    editingMessageKey = null;
-    sendBtn.textContent = 'Enviar';
-    fileInput.disabled = false;
-  } else {
-    // Nova mensagem
-    await sendMessage(text, fileUrl);
-  }
-
-  // Limpa campos
-  txtMessage.value = '';
-  fileInput.value = '';
-  updateSendButton();
-  sendBtn.disabled = false;
-});
-
-
-    // Compartilhar localização
-btnLocation.addEventListener('click', () => {
-  if (!navigator.geolocation) {
-    alert('Geolocalização não suportada');
-    return;
-  }
-
-  btnLocation.disabled = true;
-
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const { latitude, longitude } = pos.coords;
-      const message = `Minha localização: https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=18/${latitude}/${longitude}`;
-
-      
-      // Preencher o input da mensagem
-      txtMessage.value = message;
-
-      // Aqui você chama a função que envia a mensagem,
-      // ou apenas habilita o botão de enviar para o usuário clicar
-      // Por exemplo:
-      document.getElementById('send-btn').disabled = false;
-
-      btnLocation.disabled = false;
-    },
-    (err) => {
-      alert('Erro ao obter localização: ' + err.message);
-      btnLocation.disabled = false;
-    },
-    {
-      enableHighAccuracy: true,
-      maximumAge: 10000,
-      timeout: 10000,
-    }
-  );
-});
-
-
 
     // Apagar conversa
     btnClearChat.addEventListener('click', async () => {
@@ -733,4 +654,90 @@ onAuthStateChanged(auth, user => {
 
     taskList.innerHTML = '';
   }
+});
+
+
+
+//MENU SUSPENSO
+
+
+btnAttachmentMenu.addEventListener('click', (e) => {
+  e.stopPropagation();
+  // alterna visibilidade do menu
+  attachmentMenu.style.display = (attachmentMenu.style.display === 'block') ? 'none' : 'block';
+});
+
+// Fecha o menu se clicar fora
+document.addEventListener('click', () => {
+  attachmentMenu.style.display = 'none';
+});
+
+// Enviar localização direto ao clicar
+btnLocation.addEventListener('click', () => {
+  if (!me) return alert('Faça login para enviar localização');
+  if (!navigator.geolocation) {
+    alert('Geolocalização não suportada');
+    return;
+  }
+
+  btnLocation.disabled = true;
+  attachmentMenu.style.display = 'none';
+
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const { latitude, longitude } = pos.coords;
+    const message = `Minha localização: https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=18/${latitude}/${longitude}`;
+
+    await sendMessage(message, null);
+
+    btnLocation.disabled = false;
+  }, (err) => {
+    alert('Erro ao obter localização: ' + err.message);
+    btnLocation.disabled = false;
+  }, {
+    enableHighAccuracy: true,
+    maximumAge: 10000,
+    timeout: 10000,
+  });
+});
+
+// Evento para habilitar botão Enviar só se texto ou arquivo preenchidos
+txtMessage.addEventListener('input', updateSendButton);
+fileInput.addEventListener('change', updateSendButton);
+
+// Função para enviar mensagem (como no seu código original)
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  sendBtn.disabled = true;
+
+  let fileUrl = null;
+  if (fileInput.files.length) {
+    const file = fileInput.files[0];
+    fileUrl = await uploadFile(file);
+  }
+  const text = txtMessage.value.trim();
+
+  if (!text && !fileUrl) {
+    sendBtn.disabled = false;
+    return alert('Digite uma mensagem ou escolha um arquivo');
+  }
+
+  if (editingMessageKey) {
+    const messageRef = ref(db, `messages/${editingMessageKey}`);
+    await set(messageRef, {
+      sender: me.email,
+      text,
+      timestamp: Date.now(),
+      fileUrl: fileUrl || ''
+    });
+    editingMessageKey = null;
+    sendBtn.textContent = 'Enviar';
+    fileInput.disabled = false;
+  } else {
+    await sendMessage(text, fileUrl);
+  }
+
+  txtMessage.value = '';
+  fileInput.value = '';
+  updateSendButton();
+  sendBtn.disabled = false;
 });
