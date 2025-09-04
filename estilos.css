@@ -1,3 +1,12 @@
+#titulo-da-pagina{
+  font-size: 25px;
+  font-family: 'Georgia', serif;
+  color: white;
+  letter-spacing: 0.5px;
+  text-shadow: 1px 1px 2px rgba(94, 125, 242, 0.3);
+  background: linear-gradient(90deg, #5e7df2 0%, #aabaff 100%);
+  -webkit-background-clip: text;
+}
 
 #location-button {
   background: none;
